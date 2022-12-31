@@ -1,40 +1,32 @@
-import { ArrowUpIcon, ArrowDownIcon } from "@heroicons/react/20/solid";
+import { RxDragHandleDots2 } from "react-icons/rx";
 import { Button } from "@chakra-ui/react";
-import clsx from "clsx";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 export interface SortableItemProps {
-  canIncrement: boolean;
-  canDecrement: boolean;
-  onIncrement: () => void;
-  onDecrement: () => void;
+  id: number;
   children: React.ReactNode;
 }
 
-export const SortableItem = ({ canIncrement, canDecrement, onIncrement, onDecrement, children }: SortableItemProps) => {
+export const SortableItem = ({ id, children }: SortableItemProps) => {
+  const sortId = id + 1; // sort ID is 1 based indexing because useSortable can't accept 0
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: sortId });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
-    <li className="grid grid-cols-[min-content_1fr] items-center rounded-lg shadow-md gap-x-2 p-2">
-      <ArrowButton active={canIncrement} onClick={onIncrement}>
-        <ArrowUpIcon width={28} />
-      </ArrowButton>
-      <span style={{ gridRow: "span 2" }}>{children}</span>
-
-      <ArrowButton active={canDecrement} onClick={onDecrement}>
-        <ArrowDownIcon width={28} />
-      </ArrowButton>
-    </li>
-  );
-};
-
-interface ArrowButtonProps {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}
-
-const ArrowButton = ({ children, active, onClick }: ArrowButtonProps) => {
-  return (
-    <Button justifyContent="center" variant="ghost" onClick={onClick} disabled={!active}>
+    <li
+      className="grid grid-cols-[min-content_1fr] items-center rounded-lg shadow-md gap-x-2 p-2"
+      ref={setNodeRef}
+      style={style}
+    >
+      <Button justifyContent="center" variant="ghost" {...attributes} {...listeners}>
+        <RxDragHandleDots2 />
+      </Button>
       {children}
-    </Button>
+    </li>
   );
 };

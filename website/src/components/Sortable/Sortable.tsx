@@ -1,4 +1,6 @@
 import { ReactNode, useEffect, useState } from "react";
+import { DndContext, closestCenter } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { SortableItem } from "./SortableItem";
 
 export interface SortableProps {
@@ -6,7 +8,7 @@ export interface SortableProps {
   onChange: (newSortedIndices: number[]) => void;
 }
 
-export const Sortable = ({ items, onChange }) => {
+export const Sortable = ({ items, onChange }: SortableProps) => {
   const [sortOrder, setSortOrder] = useState<number[]>([]);
 
   const update = (newRanking: number[]) => {
@@ -22,27 +24,28 @@ export const Sortable = ({ items, onChange }) => {
 
   return (
     <ul className="flex flex-col gap-4">
-      {sortOrder.map((rank, i) => (
-        <SortableItem
-          key={`${rank}`}
-          canIncrement={i > 0}
-          onIncrement={() => {
-            const newRanking = sortOrder.slice();
-            const newIdx = i - 1;
-            [newRanking[i], newRanking[newIdx]] = [newRanking[newIdx], newRanking[i]];
-            update(newRanking);
-          }}
-          canDecrement={i < sortOrder.length - 1}
-          onDecrement={() => {
-            const newRanking = sortOrder.slice();
-            const newIdx = i + 1;
-            [newRanking[i], newRanking[newIdx]] = [newRanking[newIdx], newRanking[i]];
-            update(newRanking);
-          }}
-        >
-          {items[rank]}
-        </SortableItem>
-      ))}
+      <DndContext
+        collisionDetection={closestCenter}
+        onDragEnd={(event) => {
+          const { active, over } = event;
+
+          if (active.id !== over.id) {
+            const newRanking = sortOrder.slice()
+            const activeIndex = active.id as number - 1
+            const newIndex = over.id as number - 1;
+            [newRanking[activeIndex], newRanking[newIndex]] = [newRanking[newIndex], newRanking[activeIndex]]
+            update(newRanking)
+          }
+        }}
+      >
+        <SortableContext items={sortOrder.map((index) => index + 1)} strategy={verticalListSortingStrategy}>
+          {sortOrder.map((index) => (
+            <SortableItem key={index} id={index}>
+              {items[index]}
+            </SortableItem>
+          ))}
+        </SortableContext>
+      </DndContext>
     </ul>
   );
 };
