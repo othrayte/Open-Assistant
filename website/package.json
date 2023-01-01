@@ -54,6 +54,7 @@
   "devDependencies": {
     "@babel/core": "^7.20.7",
     "@chakra-ui/storybook-addon": "^4.0.16",
+    "@faker-js/faker": "^7.6.0",
     "@storybook/addon-actions": "^6.5.15",
     "@storybook/addon-essentials": "^6.5.15",
     "@storybook/addon-interactions": "^6.5.15",
@@ -69,6 +70,7 @@
     "babel-loader": "^8.3.0",
     "cypress": "^12.2.0",
     "cypress-image-diff-js": "^1.23.0",
+    "cypress-maildev": "^1.2.0",
     "eslint-plugin-storybook": "^0.6.8",
     "eslint-plugin-unused-imports": "^2.0.0",
     "prettier": "2.8.1",

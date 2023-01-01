@@ -36,4 +36,27 @@
 //   }
 // }
 
+Cypress.Commands.add("signInWithEmail", (emailAddress) => {
+  cy.log({ emailAddress });
+  cy.request("GET", "/api/auth/csrf")
+    .then((response) => {
+      const csrfToken = response.body.csrfToken;
+      cy.request("POST", "/api/auth/signin/email", {
+        callbackUrl: "/",
+        email: emailAddress,
+        csrfToken,
+        json: "true",
+      });
+    })
+    .then(() => {
+      cy.maildevGetMessageBySentTo(emailAddress.toLowerCase()).then((email) => {
+        // Find and use login link
+        const loginLink = email.html.match(
+          /href="[^"]+(\/api\/auth\/callback\/[^"]+?)"/
+        )[1];
+        cy.visit(loginLink);
+      });
+    });
+});
+
 export {};
