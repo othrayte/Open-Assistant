@@ -78,8 +78,6 @@ const RankInitialPrompts = () => {
           </p>
           <Sortable items={tasks[0].task.prompts} onChange={setRanking} className="my-8" />
         </SurveyCard>
-
-        <TaskControls tasks={tasks} onSubmitResponse={submitResponse} onSkip={fetchNextTask} />
       </div>
     </>
   );
