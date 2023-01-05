@@ -190,3 +190,5 @@ Upon making a release on GitHub, all docker images are automatically built and
 pushed to ghcr.io. The docker images are tagged with the release version, and
 the `latest` tag. Further, the ansible playbook in `ansible/dev.yaml` is run to
 automatically deploy the built release to the dev machine.
+
+No Need To Trigger E2E Tests.
