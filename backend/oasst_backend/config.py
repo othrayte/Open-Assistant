@@ -5,7 +5,7 @@ from pydantic import AnyHttpUrl, BaseSettings, PostgresDsn, validator
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "open-assistant backend"
-    API_V1_STR: str = "/api/v1"
+    API_V1_STR: str = "/api/v2"
 
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: str = "5432"
