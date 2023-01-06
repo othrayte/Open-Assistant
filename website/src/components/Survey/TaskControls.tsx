@@ -31,7 +31,7 @@ export const TaskControls = (props: TaskControlsProps) => {
         <SkipButton>Skip</SkipButton>
         {endTask.task.type !== "task_done" ? (
           <SubmitButton colorScheme="blue" data-cy="submit" onClick={() => props.onSubmitResponse(props.tasks[0])}>
-            Submit
+            Submit!
           </SubmitButton>
         ) : (
           <SubmitButton colorScheme="green" data-cy="next-task" onClick={props.onSkip}>
