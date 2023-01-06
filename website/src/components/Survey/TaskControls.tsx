@@ -34,7 +34,7 @@ export const TaskControls = (props: TaskControlsProps) => {
             Submit
           </SubmitButton>
         ) : (
-          <SubmitButton colorScheme="green" data-cy="next-task" onClick={props.onSkip}>
+          <SubmitButton colorScheme="green" data-cy="next-task">
             Next Task
           </SubmitButton>
         )}
