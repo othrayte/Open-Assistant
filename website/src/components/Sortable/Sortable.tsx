@@ -1,11 +1,13 @@
-import { Flex } from "@chakra-ui/react";
+import { Collapse, Flex } from "@chakra-ui/react";
 import {
   closestCenter,
   DndContext,
   DragOverlay,
   KeyboardSensor,
+  MouseSensor,
   PointerSensor,
   TouchSensor,
+  UniqueIdentifier,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -33,76 +35,12 @@ interface SortableItems {
   id: number;
   originalIndex: number;
   item: ReactNode;
+  collapsed: boolean;
 }
-
-const defaultScale = {
-  scaleX: 1,
-  scaleY: 1,
-};
-
-const customVerticalListSortingStrategy =
-  (preRect: DOMRect | null): SortingStrategy =>
-  ({ activeIndex, activeNodeRect: fallbackActiveRect, index, rects, overIndex }) => {
-    const activeNodeRect = rects[activeIndex] ?? fallbackActiveRect;
-    console.log(index);
-    if (!activeNodeRect) {
-      return null;
-    }
-
-    if (preRect) {
-      return {
-        x: 0,
-        y: preRect.top - rects[activeIndex].top,
-        ...defaultScale,
-      };
-    }
-
-    if (index === activeIndex) {
-      const overIndexRect = rects[overIndex];
-
-      if (!overIndexRect) {
-        return null;
-      }
-
-      return {
-        x: 0,
-        y:
-          activeIndex < overIndex
-            ? overIndexRect.top + overIndexRect.height - (activeNodeRect.top + activeNodeRect.height)
-            : overIndexRect.top - activeNodeRect.top,
-        ...defaultScale,
-      };
-    }
-
-    // TODO: Handle single item case
-    const itemGap = rects[1].top - rects[0].bottom;
-
-    if (index > activeIndex && index <= overIndex) {
-      return {
-        x: 0,
-        y: -activeNodeRect.height - itemGap,
-        ...defaultScale,
-      };
-    }
-
-    if (index < activeIndex && index >= overIndex) {
-      return {
-        x: 0,
-        y: activeNodeRect.height + itemGap,
-        ...defaultScale,
-      };
-    }
-
-    return {
-      x: 0,
-      y: 0,
-      ...defaultScale,
-    };
-  };
 
 export const Sortable = (props: SortableProps) => {
   const [itemsWithIds, setItemsWithIds] = useState<SortableItems[]>([]);
-  const [activeDrag, setActiveDrag] = useState(null);
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
 
   useEffect(() => {
     setItemsWithIds(
@@ -118,6 +56,7 @@ export const Sortable = (props: SortableProps) => {
         `,
         id: idx + 1, // +1 because dndtoolkit has problem with "falsy" ids
         originalIndex: idx,
+        collapsed: false,
       }))
     );
   }, [props.items]);
@@ -126,81 +65,66 @@ export const Sortable = (props: SortableProps) => {
   const itemEls = useRef({});
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(TouchSensor),
+    useSensor(MouseSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
   const extraClasses = props.className || "";
-
-  const wrapperStyle = activeDrag
-    ? {
-        /*height: activeDrag.dragAreaHeight,*/
-        /*transform: `translate3d(0, ${0}px, 0)`*/
-      }
-    : {};
-
-  let y = null;
-
+  const activeItem = itemsWithIds.find((item) => item.id == activeId);
   return (
-    <div
-      ref={ref}
-      style={wrapperStyle}
-      onMouseMove={(ev) => {
-        y = ev.clientY;
-      }}
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      modifiers={[restrictToVerticalAxis]}
     >
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        modifiers={[restrictToVerticalAxis]}
-      >
-        <SortableContext items={itemsWithIds} strategy={customVerticalListSortingStrategy(activeDrag?.activeRect)}>
-          <Flex direction="column" gap={2} className={extraClasses}>
-            {itemsWithIds.map(({ id, item }) => (
-              <SortableItem
-                saveRef={(element: HTMLElement) => {
-                  itemEls.current[id] = element;
-                }}
-                key={id}
-                id={id}
-                activeId={activeDrag?.activeId}
-              >
-                {item}
-              </SortableItem>
-            ))}
-          </Flex>
-          <DragOverlay>
-            {activeDrag ? (
-              <SortableItem saveRef={null} id={200} activeId={0}>
-                {itemsWithIds.find((item) => item.id == activeDrag.activeId).item}
-              </SortableItem>
-            ) : null}
-          </DragOverlay>
-        </SortableContext>
-      </DndContext>
-    </div>
+      <SortableContext items={itemsWithIds} strategy={verticalListSortingStrategy}>
+        <Flex direction="column" gap={2} className={extraClasses}>
+          {itemsWithIds.map(({ id, item, collapsed }) => (
+            <SortableItem
+              saveRef={(element: HTMLElement) => {
+                itemEls.current[id] = element;
+              }}
+              key={id}
+              id={id}
+              activeId={activeId}
+              collapsed={collapsed}
+              onClick={() => {
+                const newState = itemsWithIds.slice();
+                const item = newState.find((item) => item.id == id);
+                item.collapsed = !item.collapsed;
+                setItemsWithIds(newState);
+              }}
+            >
+              {item}
+            </SortableItem>
+          ))}
+        </Flex>
+        <DragOverlay>
+          {activeId ? (
+            <SortableItem saveRef={null} id={0} activeId={activeId} collapsed={activeItem.collapsed}>
+              {activeItem.item}
+            </SortableItem>
+          ) : null}
+        </DragOverlay>
+      </SortableContext>
+    </DndContext>
   );
 
   function handleDragStart(event: DragStartEvent) {
     const { active } = event;
-    console.log(y);
-    console.log(ref.current.getBoundingClientRect());
-    console.log(active.id);
-    console.log(itemEls.current[active.id]);
-    setActiveDrag({
-      activeId: active.id,
-      dragAreaHeight: ref.current.clientHeight,
-      activeRect: itemEls.current[active.id].getBoundingClientRect(),
-    });
+    const newState = itemsWithIds.slice();
+    newState.forEach((item) => (item.collapsed = true));
+    setItemsWithIds(newState);
+    setActiveId(active.id);
   }
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
-    setActiveDrag(null);
-    if (active.id === over.id) {
+    setActiveId(null);
+    if (!over || active.id === over.id) {
       return;
     }
     setItemsWithIds((items) => {

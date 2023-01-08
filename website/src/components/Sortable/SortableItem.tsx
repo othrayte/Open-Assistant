@@ -1,8 +1,9 @@
 import { Button } from "@chakra-ui/react";
 import { useColorMode } from "@chakra-ui/react";
+import { UniqueIdentifier } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { PropsWithChildren } from "react";
+import { MouseEventHandler, PropsWithChildren } from "react";
 import { RxDragHandleDots2 } from "react-icons/rx";
 
 import { CollapsableText } from "../CollapsableText";
@@ -12,10 +13,16 @@ export const SortableItem = ({
   children,
   id,
   activeId,
-}: PropsWithChildren<{ saveRef: (e: HTMLElement) => void | null; id: number; activeId: number }>) => {
+  collapsed,
+  onClick,
+}: PropsWithChildren<{
+  saveRef: (e: HTMLElement) => void | null;
+  id: number;
+  activeId: UniqueIdentifier;
+  collapsed: boolean;
+  onClick?: MouseEventHandler<HTMLLIElement>;
+}>) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
-
-  console.log(transition);
 
   const style = {
     transform: transform ? CSS.Translate.toString(transform) : "translate3d(0, 0, 0)",
@@ -29,7 +36,7 @@ export const SortableItem = ({
       ? "bg-slate-600 hover:bg-slate-500 text-white"
       : "bg-black hover:bg-slate-900 text-white ring-1 ring-white/30 ring-inset hover:ring-slate-200/50";
 
-  const ghostStyle = id === 200 /*activeId*/ ? "invisible" : "";
+  const ghostStyle = id === activeId ? "invisible" : "";
 
   return (
     <li
@@ -40,14 +47,16 @@ export const SortableItem = ({
           saveRef && saveRef(r);
         }
       }}
+      touch-action="manipulation"
       style={style}
       {...attributes}
       {...listeners}
+      onClick={(e) => {
+        onClick && onClick(e);
+      }}
     >
       <RxDragHandleDots2 />
-      <div style={{ maxHeight: activeId ? 100 : 5000, overflow: "hidden", transition: "max-height 200ms ease" }}>
-        {children}
-      </div>
+      <div style={{ maxHeight: collapsed ? 100 : null, overflow: "hidden" }}>{children}</div>
     </li>
   );
 };
