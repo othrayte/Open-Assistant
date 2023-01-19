@@ -12,28 +12,18 @@ import { TaskType } from "src/types/Task";
 export const LabelTask = ({
   task,
   taskType,
-  onReplyChanged,
   isEditable,
+  onReplyChanged,
+  onValidityChanged,
 }: TaskSurveyProps<{ text: string; labels: Record<string, number>; message_id: string }>) => {
-  const valid_labels = task.valid_labels;
-  const [sliderValues, setSliderValues] = useState<number[]>(new Array(valid_labels.length).fill(0));
+  const [sliderValues, setSliderValues] = useState<number[]>(new Array(task.valid_labels.length).fill(0));
 
   useEffect(() => {
-    onReplyChanged({
-      content: { labels: {}, text: task.reply, message_id: task.message_id },
-      state: "NOT_SUBMITTABLE",
-    });
-  }, [task, onReplyChanged]);
-
-  const onSliderChange = (values: number[]) => {
-    console.assert(valid_labels.length === sliderValues.length);
-    const labels = Object.fromEntries(valid_labels.map((label, i) => [label, sliderValues[i]]));
-    onReplyChanged({
-      content: { labels, text: task.reply || task.prompt, message_id: task.message_id },
-      state: "VALID",
-    });
-    setSliderValues(values);
-  };
+    console.assert(task.valid_labels.length === sliderValues.length);
+    const labels = Object.fromEntries(task.valid_labels.map((label, i) => [label, sliderValues[i]]));
+    onReplyChanged({ labels, text: task.reply || task.prompt, message_id: task.message_id });
+    onValidityChanged(sliderValues.every((value) => value !== null) ? "VALID" : "INVALID");
+  }, [task, sliderValues, onReplyChanged, onValidityChanged]);
 
   const cardColor = useColorModeValue("gray.50", "gray.800");
 
@@ -62,9 +52,9 @@ export const LabelTask = ({
           )}
         </>
         {task.mode === "simple" ? (
-          <LabelRadioGroup labelIDs={task.valid_labels} isEditable={isEditable} onChange={onSliderChange} />
+          <LabelRadioGroup labelIDs={task.valid_labels} isEditable={isEditable} onChange={setSliderValues} />
         ) : (
-          <LabelSliderGroup labelIDs={task.valid_labels} isEditable={isEditable} onChange={onSliderChange} />
+          <LabelSliderGroup labelIDs={task.valid_labels} isEditable={isEditable} onChange={setSliderValues} />
         )}
       </TwoColumnsWithCards>
     </div>
