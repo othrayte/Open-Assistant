@@ -151,16 +151,6 @@ export const FlaggableElement = (props: FlaggableElementProps) => {
     >
       <Box display="flex" alignItems="center" gap="2">
         <PopoverAnchor>{props.children}</PopoverAnchor>
-
-        <Tooltip label="Report" bg="red.500" aria-label="A tooltip">
-          <Box>
-            <PopoverTrigger>
-              <Box as="button" display="flex" alignItems="center" justifyContent="center" borderRadius="full" p="1">
-                <FiAlertCircle size="20" className="text-red-400" aria-hidden="true" />
-              </Box>
-            </PopoverTrigger>
-          </Box>
-        </Tooltip>
       </Box>
 
       <PopoverContent width="auto" p="3" m="4" maxWidth="calc(100vw - 2rem)">

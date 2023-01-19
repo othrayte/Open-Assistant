@@ -1,4 +1,4 @@
-import { Box, useColorModeValue } from "@chakra-ui/react";
+import { Box, Text, useColorModeValue, VStack } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { MessageView } from "src/components/Messages";
 import { MessageTable } from "src/components/Messages/MessageTable";
@@ -16,7 +16,7 @@ export const LabelTask = ({
   onReplyChanged,
   onValidityChanged,
 }: TaskSurveyProps<{ text: string; labels: Record<string, number>; message_id: string }>) => {
-  const [sliderValues, setSliderValues] = useState<number[]>(new Array(task.valid_labels.length).fill(0));
+  const [sliderValues, setSliderValues] = useState<number[]>(new Array(task.valid_labels.length).fill(null));
 
   useEffect(() => {
     console.assert(task.valid_labels.length === sliderValues.length);
@@ -33,8 +33,9 @@ export const LabelTask = ({
         <>
           <TaskHeader taskType={taskType} />
           {task.conversation ? (
-            <Box mt="4" p="6" borderRadius="lg" bg={cardColor}>
+            <Box mt="4" p={[4, 6]} borderRadius="lg" bg={cardColor}>
               <MessageTable
+                highlightLastMessage
                 messages={[
                   ...(task.conversation?.messages ?? []),
                   {
@@ -51,11 +52,15 @@ export const LabelTask = ({
             </Box>
           )}
         </>
-        {task.mode === "simple" ? (
-          <LabelRadioGroup labelIDs={task.valid_labels} isEditable={isEditable} onChange={setSliderValues} />
-        ) : (
-          <LabelSliderGroup labelIDs={task.valid_labels} isEditable={isEditable} onChange={setSliderValues} />
-        )}
+        <VStack alignItems="start">
+          <Text>The highlighted message is:</Text>
+          <LabelSliderGroup
+            simple={task.mode === "simple"}
+            labelIDs={task.valid_labels}
+            isEditable={isEditable}
+            onChange={setSliderValues}
+          />
+        </VStack>
       </TwoColumnsWithCards>
     </div>
   );

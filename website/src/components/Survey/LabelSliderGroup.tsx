@@ -1,30 +1,23 @@
 import {
-  Text,
-  Grid,
-  Slider,
-  SliderFilledTrack,
-  SliderThumb,
-  SliderTrack,
-  useColorMode,
-  GridItem,
-  RadioGroup,
-  Radio,
   Button,
-  Popover,
-  PopoverTrigger,
+  Grid,
+  GridItem,
   IconButton,
-  PopoverContent,
+  Popover,
   PopoverArrow,
-  PopoverCloseButton,
   PopoverBody,
+  PopoverCloseButton,
+  PopoverContent,
+  PopoverTrigger,
+  Text,
 } from "@chakra-ui/react";
 import { InformationCircleIcon } from "@heroicons/react/20/solid";
-import { useId, useState } from "react";
-import { colors } from "src/styles/Theme/colors";
+import { useState } from "react";
 
 // TODO: consolidate with FlaggableElement
 interface LabelSliderGroupProps {
   labelIDs: Array<string>;
+  simple?: boolean;
   onChange: (sliderValues: number[]) => unknown;
   isEditable?: boolean;
 }
@@ -49,6 +42,16 @@ const label_messages: {
       "Please mark this text as spam only if it is clearly unsuited to be part of our dataset, as outlined above, and try not to make any subjective value-judgments beyond that.",
     ],
   },*/
+  spam: {
+    zeroText: "Suitable for Training",
+    oneText: "Spam",
+    description: "Seems to be intentionally low-quality or irrelevant",
+    explanation: [
+      'We consider the following unwanted content as spam: trolling, intentional undermining of our purpose, illegal material, material that violates our code of conduct, and other things that are inappropriate for our dataset. We collect these under the common heading of "spam".',
+      "This is not an assessment of whether this message is the best possible answer. Especially for prompts or user-replies, we very much want to retain all kinds of responses in the dataset, so that the assistant can learn to reply appropriately.",
+      "Please mark this text as spam only if it is clearly unsuited to be part of our dataset, as outlined above, and try not to make any subjective value-judgments beyond that.",
+    ],
+  },
   fails_task: {
     zeroText: "Follows Instructions",
     oneText: "Fails Task",
@@ -111,14 +114,16 @@ const label_messages: {
   creative: { zeroText: "Boring", oneText: "Creative", description: "Expresses creativity in responding to the task" },
 };
 
-export const LabelSliderGroup = ({ labelIDs, onChange, isEditable }: LabelSliderGroupProps) => {
+export const LabelSliderGroup = ({ labelIDs, simple = false, onChange, isEditable }: LabelSliderGroupProps) => {
   const [sliderValues, setSliderValues] = useState<number[]>(Array.from({ length: labelIDs.length }).map(() => null));
 
   return (
     <Grid
       templateColumns={{
-        base: "1fr 2em 2em 2em 1fr",
-        md: "minmax(max-content, 2fr) minmax(2em, 1fr) minmax(2em, 1fr) minmax(2em, 1fr) minmax(max-content, 2fr)",
+        base: simple ? "1fr 1fr" : "1fr 2em 2em 2em 1fr",
+        md: simple
+          ? "minmax(max-content, 2fr) minmax(max-content, 2fr)"
+          : "minmax(max-content, 2fr) minmax(2em, 1fr) minmax(2em, 1fr) minmax(2em, 1fr) minmax(max-content, 2fr)",
       }}
       rowGap="0.2em"
       columnGap={2}
@@ -128,6 +133,7 @@ export const LabelSliderGroup = ({ labelIDs, onChange, isEditable }: LabelSlider
         labelId in label_messages ? (
           <CheckboxSliderItem
             key={idx}
+            simple={simple}
             labelId={labelId}
             sliderValue={sliderValues[idx]}
             sliderHandler={(sliderValue) => {
@@ -193,6 +199,7 @@ const IntermediateButton = ({
 
 function CheckboxSliderItem(props: {
   labelId: string;
+  simple: boolean;
   sliderValue: number;
   sliderHandler: (newVal: number) => unknown;
   isEditable: boolean;
@@ -205,16 +212,20 @@ function CheckboxSliderItem(props: {
         value={0}
         currentValue={props.sliderValue}
       />
-      <IntermediateButton setValue={props.sliderHandler} value={0.25} currentValue={props.sliderValue} />
-      <IntermediateButton setValue={props.sliderHandler} value={0.5} currentValue={props.sliderValue} />
-      <IntermediateButton setValue={props.sliderHandler} value={0.75} currentValue={props.sliderValue} />
+      {props.simple ? null : (
+        <>
+          <IntermediateButton setValue={props.sliderHandler} value={0.25} currentValue={props.sliderValue} />
+          <IntermediateButton setValue={props.sliderHandler} value={0.5} currentValue={props.sliderValue} />
+          <IntermediateButton setValue={props.sliderHandler} value={0.75} currentValue={props.sliderValue} />
+        </>
+      )}
       <LabelButton
         text={label_messages[props.labelId].oneText}
         setValue={props.sliderHandler}
         value={1}
         currentValue={props.sliderValue}
       />
-      <GridItem colSpan={5} paddingBottom="1ex">
+      <GridItem colSpan={props.simple ? 2 : 5} paddingBottom="1ex">
         <Text fontSize="xs">
           {label_messages[props.labelId].description}
           {label_messages[props.labelId].explanation ? (
